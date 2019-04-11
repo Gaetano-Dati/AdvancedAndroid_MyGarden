@@ -16,11 +16,14 @@ package com.example.android.mygarden;
 * limitations under the License.
 */
 
+import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -32,13 +35,37 @@ import com.example.android.mygarden.ui.PlantDetailActivity;
 public class PlantWidgetProvider extends AppWidgetProvider {
 
     // setImageViewResource to update the widget’s image
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int imgRes, long plantId, boolean showWater, int appWidgetId) {
 
         // TODO (4): separate the updateAppWidget logic into getGardenGridRemoteView and getSinglePlantRemoteView
         // TODO (5): Use getAppWidgetOptions to get widget width and use the appropriate RemoteView method
         // TODO (6): Set the PendingIntent template in getGardenGridRemoteView to launch PlantDetailActivity
-        
+
+        Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
+        int width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
+
+        RemoteViews rv;
+
+        if(width < 300){
+            rv = getSinglePlantRemoteView(context, imgRes, plantId, showWater);
+        }else{
+            rv = getGardenGridRemoteView(context);
+        }
+
+        appWidgetManager.updateAppWidget(appWidgetId, rv);
+    }
+
+    /**
+     *
+     * @param context The context
+     * @param imgRes The image resource
+     * @param plantId The database plant ID for watering functionality
+     * @param showWater The boolean for either show/hide the water drop
+     * @return The RemoteViews returned for the Single mode display
+     */
+    public static RemoteViews getSinglePlantRemoteView(Context context, int imgRes, long plantId, boolean showWater){
         Intent intent;
         if (plantId == PlantContract.INVALID_PLANT_ID) {
             intent = new Intent(context, MainActivity.class);
@@ -65,8 +92,23 @@ public class PlantWidgetProvider extends AppWidgetProvider {
         wateringIntent.putExtra(PlantWateringService.EXTRA_PLANT_ID, plantId);
         PendingIntent wateringPendingIntent = PendingIntent.getService(context, 0, wateringIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         views.setOnClickPendingIntent(R.id.widget_water_button, wateringPendingIntent);
-        // Instruct the widget manager to update the widget
-        appWidgetManager.updateAppWidget(appWidgetId, views);
+
+        return views;
+    }
+
+    /**
+     * This method sets the widget to show a Grid when its width will be > 300
+     * @param context The context
+     * @return the RemoteViews for the GridMode
+     */
+    public static RemoteViews getGardenGridRemoteView(Context context){
+        return null;
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        PlantWateringService.startActionUpdatePlantWidgets(context);
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
     }
 
     @Override
@@ -75,6 +117,15 @@ public class PlantWidgetProvider extends AppWidgetProvider {
         PlantWateringService.startActionUpdatePlantWidgets(context);
     }
 
+    /**
+     * Updates all widget instances given the widget IDS and display information
+     * @param context The calling context
+     * @param appWidgetManager The widget manager
+     * @param imgRes The image resource for single plant mode
+     * @param plantId The database id for that plant
+     * @param showWater The boolean for either show/hide the water drop
+     * @param appWidgetIds Array of widget Ids to be updated
+     */
     public static void updatePlantWidgets(Context context, AppWidgetManager appWidgetManager,
                                           int imgRes, long plantId, boolean showWater, int[] appWidgetIds) {
         for (int appWidgetId : appWidgetIds) {
