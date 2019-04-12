@@ -117,6 +117,6 @@ class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
 
     @Override
     public boolean hasStableIds() {
-        return false;
+        return true;
     }
 }
