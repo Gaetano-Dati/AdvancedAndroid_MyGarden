@@ -39,10 +39,6 @@ public class PlantWidgetProvider extends AppWidgetProvider {
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int imgRes, long plantId, boolean showWater, int appWidgetId) {
 
-        // TODO (4): separate the updateAppWidget logic into getGardenGridRemoteView and getSinglePlantRemoteView
-        // TODO (5): Use getAppWidgetOptions to get widget width and use the appropriate RemoteView method
-        // TODO (6): Set the PendingIntent template in getGardenGridRemoteView to launch PlantDetailActivity
-
         Bundle options = appWidgetManager.getAppWidgetOptions(appWidgetId);
         int width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
 
@@ -102,7 +98,21 @@ public class PlantWidgetProvider extends AppWidgetProvider {
      * @return the RemoteViews for the GridMode
      */
     public static RemoteViews getGardenGridRemoteView(Context context){
-        return null;
+        RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_grid_view);
+
+        //Here the Service will act as the adapter of the GridView
+        Intent intent = new Intent(context, GridWidgetService.class);
+        remoteViews.setRemoteAdapter(R.id.widget_grid_view, intent);
+
+        //Set the Detail Activity to open when clicked
+        Intent appIntent = new Intent(context, PlantDetailActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, appIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteViews.setPendingIntentTemplate(R.id.widget_grid_view, pendingIntent);
+
+        //Handle empty garden
+        remoteViews.setEmptyView(R.id.widget_grid_view, R.id.empty_view);
+
+        return remoteViews;
     }
 
     @Override
