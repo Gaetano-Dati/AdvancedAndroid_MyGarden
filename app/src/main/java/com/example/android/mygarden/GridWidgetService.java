@@ -4,11 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.example.android.mygarden.provider.PlantContract;
+import com.example.android.mygarden.ui.PlantDetailActivity;
 import com.example.android.mygarden.utils.PlantUtils;
 
 import static com.example.android.mygarden.provider.PlantContract.BASE_CONTENT_URI;
@@ -95,6 +97,13 @@ class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
         views.setTextViewText(R.id.widget_plant_name, String.valueOf(plantId));
         //Always hide water drop in GridView mode
         views.setViewVisibility(R.id.widget_water_button, View.GONE);
+
+        //This lets the click on each item to behave differently
+        Bundle extras = new Bundle();
+        extras.putLong(PlantDetailActivity.EXTRA_PLANT_ID, plantId);
+        Intent fillInIntent = new Intent();
+        fillInIntent.putExtras(extras);
+        views.setOnClickFillInIntent(R.id.widget_plant_image ,fillInIntent);
 
         return views;
     }
